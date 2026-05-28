@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#07090c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)" />
+    <meta name="description" content="Universal identifier inspector. Paste any ID — UUID, ULID, KSUID, Snowflake, ObjectId, Stripe, NanoID, TSID, Xid, CUID, Sqids, or a Unix timestamp — and see what it is and what's inside. 100% client-side, no telemetry." />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none';" />
+    <title>ID Lens — paste any identifier, see what it is</title>
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='14' cy='14' r='8' fill='none' stroke='%237aa2ff' stroke-width='3'/><line x1='20' y1='20' x2='27' y2='27' stroke='%237aa2ff' stroke-width='3' stroke-linecap='round'/></svg>" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <noscript>
+      <p style="color:#e6edf6;background:#07090c;font-family:system-ui;padding:24px;">
+        ID Lens requires JavaScript to run. All processing happens in your browser — nothing is sent anywhere.
+      </p>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
