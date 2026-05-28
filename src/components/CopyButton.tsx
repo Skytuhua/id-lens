@@ -2,40 +2,41 @@ import { useState, useCallback } from 'preact/hooks';
 
 interface Props {
   value: string;
+  label?: string;
   ariaLabel?: string;
 }
 
-export function CopyButton({ value, ariaLabel }: Props) {
-  const [copied, setCopied] = useState(false);
+export function CopyButton({ value, label = 'COPY', ariaLabel }: Props) {
+  const [flash, setFlash] = useState(false);
 
   const onClick = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1100);
     } catch {
-      // Best-effort fallback: select + execCommand is deprecated; just no-op.
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+      } catch {
+        /* clipboard unavailable */
+      }
+      document.body.removeChild(ta);
     }
+    setFlash(true);
+    setTimeout(() => setFlash(false), 700);
   }, [value]);
 
   return (
     <button
       type="button"
-      class={`copy-btn${copied ? ' copied' : ''}`}
+      class={`field__copy${flash ? ' flash' : ''}`}
       onClick={onClick}
-      aria-label={ariaLabel ?? 'Copy value'}
-      title={copied ? 'Copied' : 'Copy'}
+      aria-label={ariaLabel ?? `Copy ${label}`}
+      aria-live="polite"
     >
-      {copied ? (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-      ) : (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
-      )}
+      {flash ? '✓ COPIED' : label}
     </button>
   );
 }

@@ -114,3 +114,78 @@ What's missing from a v1 perspective:
 
 I'd ship this. It does the niche job well and does not try to be more
 than that.
+
+---
+
+## v2.0.0 — TUI redesign review
+
+After porting the externally-commissioned redesign onto the existing
+Preact / TS / Vite stack, I drove the app through every state again in
+headless Chromium at desktop (1280×900) and mobile (390×800). 22
+screenshots captured. Decoder unit tests still pass 82/82; lint clean;
+production build 63 KB JS / 22 KB gzipped.
+
+### Findings during this pass
+
+1. **Screenshot script referenced old DOM selectors.** The redesign
+   replaced `.app-header` (cool-blue header) with `.titlebar` and dropped
+   the theme toggle entirely. The Playwright flow timed out waiting for
+   `.app-header`. **Fix:** rewrote `review/screenshot.mjs` to point at
+   `.titlebar`, fill via a robust JS setter (so React-style input
+   tracking fires), removed the light-theme pass (light mode dropped),
+   and added a screenshot of the new `?` help overlay.
+
+2. **Snowflakes had no hex-dump in the new card layout.** The redesign
+   makes the hex dump central; Snowflake results didn't render one
+   because `snowflakeDecoder.decode()` omits the `layout` field, and the
+   `ResultCard` skips the dump when `layout` is missing. I considered
+   adding a byte-level layout for Snowflakes but rejected it: Snowflakes
+   pack bits within bytes (41 + 10 + 12 or 41 + 13 + 10 depending on
+   vendor), so coloring each byte by one segment would be misleading.
+   The field grid + per-label segment markers carry the bit-level
+   structure cleanly. Snowflakes intentionally render without the dump;
+   every byte-aligned format keeps it.
+
+3. **Status bar mid-content in full-page screenshots.** A Playwright
+   quirk: `fullPage: true` doesn't pin `position: fixed` elements. They
+   appear at their original viewport position in the captured PNG, not
+   pinned to the canvas bottom. In a real browser the bar is correctly
+   pinned. The captured screenshots show this behaviour and it's
+   harmless. The `.shell` element has `padding-bottom: 80px` so the
+   pinned bar never overlaps the last content row in the live page.
+
+4. **No light-mode regressions.** Confirmed by deleting the
+   `data-theme='light'` rules and forcing `dark` in `App.tsx`'s mount
+   effect. No styles referenced the light tokens.
+
+### Verification artefacts
+
+- `review/screenshots/desktop-01-inspector-empty.png` — clean empty
+  state with example chip row.
+- `desktop-02-inspector-uuid-v1.png` — full hex-dump cross-section,
+  segment-colored leader brackets, per-label markers.
+- `desktop-03-inspector-ulid.png` — two-segment (time + rand) leader
+  bracket art, ULID-spec link.
+- `desktop-04-inspector-snowflake-ambiguous.png` — primary Twitter
+  result + "OTHER CANDIDATES — 2" collapsed list (Discord, Instagram).
+- `desktop-05-inspector-stripe-test-key.png` — Stripe object-type
+  decode + key warning.
+- `desktop-06-inspector-no-match.png` — err-red rail + UNRECOGNISED.
+- `desktop-07-examples.png`, `desktop-08-batch.png`,
+  `desktop-09-generators.png`, `desktop-10-about.png` — all four other
+  tabs in the TUI idiom.
+- `desktop-11-help-overlay.png` — `?` modal showing all key bindings.
+- Mobile (390 px) counterparts for every state — single-column
+  collapse working correctly.
+
+### "Would a real user keep this?" — round 2
+
+The TUI direction is risky in that it can feel cosplay if executed
+shallowly. This one doesn't — the hex-dump cross-section delivers real
+visual information (which bytes hold which fields, color-coded, with
+leader-line art that maps to the field grid below). The status bar
+makes the privacy claim ambient instead of just documented. The
+keyboard idiom (`1`-`5`, `/`, `?`) matches the audience.
+
+Identifier work happens in terminals. This tool now looks like an
+extension of that workflow rather than a generic webapp. I'd ship it.
