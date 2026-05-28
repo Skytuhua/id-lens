@@ -1,4 +1,5 @@
 import { CopyButton } from './CopyButton';
+import { segName } from '../lib/segments';
 import type { DecodedField } from '../types';
 
 interface Props {
@@ -6,18 +7,19 @@ interface Props {
 }
 
 export function FieldRow({ field }: Props) {
+  const sn = segName(field.segment);
+  const copyable = field.value && field.value !== '—';
   return (
-    <div class="field-row">
-      <div class="field-label">{field.label}</div>
-      <div class={`field-value${field.mono ? ' mono' : ''}`} data-segment={field.segment ?? ''}>
-        <span class="field-value-text">{field.value}</span>
-        {field.hint ? <span class="hint">{field.hint}</span> : null}
+    <div class="field">
+      <div class="field__label" data-seg={sn ?? undefined}>
+        <span class="marker" aria-hidden="true" />
+        {field.label}
       </div>
-      {field.value && field.value !== '—' ? (
-        <CopyButton value={field.value} ariaLabel={`Copy ${field.label}`} />
-      ) : (
-        <span />
-      )}
+      <div class="field__value">
+        <span>{field.value}</span>
+        {field.hint ? <span class="note">— {field.hint}</span> : null}
+      </div>
+      {copyable ? <CopyButton value={field.value} ariaLabel={`Copy ${field.label}`} /> : <span />}
     </div>
   );
 }

@@ -70,3 +70,87 @@ A running diary of decisions, dead ends, and fixes. Newest at top.
 - Zipped a portable artifact (`id-lens-v1.0.0-dist.zip`, 26 KB).
 - Verified the artifact loads cleanly via a fresh `python3 -m http.server`
   and produces identical screenshots to the dev preview.
+
+## v2.0.0 — TUI redesign
+
+A full visual reset commissioned externally. Direction lock-in: terminal-
+native (TUI, ncurses, fixed-grid, very dense), dark-only, single amber
+accent, avoid generic web design, must remain recognisably a developer
+tool but much better.
+
+### Approach
+
+Taken from the redesign's INTEGRATION.md as Path B: keep the existing
+Preact/TS decoder core and unit-test scaffolding completely intact —
+the 82 unit tests stay green throughout — and replace only the visual
+layer. The redesign was shipped as a React+Babel-CDN prototype; ported
+each piece to Preact + TS, sharpened the typings, kept Vite + the
+existing CSP and build pipeline.
+
+### What landed
+
+1. **Tokens rewritten** (`src/tokens.css`). Warmer canvas (#0a0c10),
+   CRT-cream ink (#d8d2c4), amber accent (#e8a04a). Segment palette
+   restated (`time / mach / seq / rand / ver / meta`). No light-mode
+   counterpart — that theme is gone.
+2. **`src/styles.css` replaced** with the TUI styleset. Scanline overlay,
+   zero radius everywhere, box-drawing glyph support, sharp buttons.
+3. **New TUI primitives**: `Titlebar` (with a live UTC clock), `TabBar`
+   (numbered tmux idiom), `StatusBar` (pinned viewport-bottom), `Panel`,
+   `ConfBar` (5-cell level meter), `HelpOverlay` (`?` modal).
+4. **`ByteLayout` rebuilt** as a two-row hex-dump cross-section with
+   Unicode leader brackets under each contiguous segment + a per-segment
+   legend.
+5. **`FieldRow` gained per-label segment-color markers** matching the
+   byte-dump taxonomy.
+6. **`Candidates` added** as a collapsible list under the primary
+   result for ambiguous Snowflakes (click to expand full breakdown).
+7. **Keyboard shortcuts wired in**: 1–5 / / ? Esc.
+8. **Help overlay** listing all bindings.
+9. **`Inspector`, `Examples`, `Batch`, `Generators`, `About` reskinned**.
+10. **`ThemeToggle` removed**; light-theme `[data-theme='light']` rules
+    deleted; the app force-sets `data-theme='dark'`.
+11. **Bracketed wordmark** `[ ID · LENS ] v2.0.0` and a live UTC clock
+    in the titlebar.
+
+### Decisions worth flagging (departures from the prototype)
+
+- **Kept system mono fallback only — no Google Fonts `@import`.**
+  The CSS still asks for `JetBrains Mono` first, but the stack already
+  falls back to system mono, and the strict-no-network CSP is preserved.
+  The TUI feel is intact on common systems; the box-drawing glyphs
+  render correctly in every system mono I tested.
+- **Confidence label kept categorical (high / medium / low) instead of
+  a percentage number.** The 5-cell bar already encodes the magnitude
+  visually; the categorical label is what the decoder API actually
+  returns, so showing both is honest about the source of truth.
+- **Snowflakes have no hex-dump.** The byte-layout strip relies on
+  byte-aligned segments. Snowflakes pack bits within bytes
+  (41/10/12 or 41/13/10 bits depending on vendor), so a byte-level
+  taxonomy would be misleading. The field grid carries the structure
+  cleanly without it.
+
+### Verification
+
+- 82/82 unit tests still green.
+- ESLint clean (0 errors).
+- Production build: 63 KB JS (22 KB gzipped), 20 KB CSS (4.2 KB gzipped).
+- 22 screenshots captured (11 desktop + 11 mobile) across every state:
+  empty inspector, UUID v1, ULID, ambiguous Snowflake, Stripe test key,
+  no-match, all four other tabs, help overlay.
+- Hex-dump leader brackets render correctly in system mono.
+- Status bar updates `MODE / LEN / FMT / CONF / PRIVACY` live as
+  inputs change.
+
+### Files changed
+
+- Replaced: `src/tokens.css`, `src/styles.css`, `index.html`, every
+  component except `CopyButton` (which was largely reused but updated
+  for the new UPPERCASE `COPY` / `✓ COPIED` flash idiom).
+- Added: `src/lib/segments.ts` (numeric → named segment mapping),
+  `src/components/{Titlebar,TabBar,StatusBar,Panel,ConfBar,Candidates,HelpOverlay}.tsx`.
+- Removed: `src/components/ThemeToggle.tsx`.
+- Updated: `BUILD_LOG.md`, `CHANGELOG.md`, `README.md`, `REVIEW.md`,
+  `DESIGN.md` (this section + the new token table).
+- Decoders, decoder unit tests, examples library, and detection algorithm
+  are unchanged from v1.0.0.

@@ -1,232 +1,224 @@
-# ID Lens — Design System
+# ID Lens — Design System (v2)
 
 Single source of truth for visual decisions. Every screen renders against
 these tokens; deviations are bugs.
 
 ## Aesthetic intent
 
-A precision instrument. Dark-first, monospace-confident, generous breathing
-room. The visual language is closer to a debugger than a marketing page:
-hairline borders, sharp corners, tabular numbers, byte-grid layouts. Color
-is used sparingly — one cool accent for "this is the answer," three muted
-hues for byte-group highlighting, semantic green/amber/red reserved for
-states. Nothing decorative, nothing celebratory.
+A terminal-native instrument. Fixed-grid, monospace everywhere, dark only.
+The visual language is closer to `htop`, `lazygit`, `tmux`, `xxd` than to a
+marketing page. Sharp rectangles, hairline borders, box-drawing characters,
+a faint scanline overlay. One chromatic accent (amber) reserved for the
+active state, focus, copy-flash, and the mode pill — everything else uses
+either the warm CRT-cream ink or the segment palette (which is taxonomy,
+never decoration).
+
+The previous (v1) cool-blue debugger aesthetic is gone. So is light mode.
 
 ## Color tokens
 
 ```
---canvas:           #07090c    /* page background */
---surface-1:        #0d1117    /* primary card / panel */
---surface-2:        #141a23    /* inner card / hover state */
---surface-3:        #1b2330    /* elevated overlay, dropdowns */
---surface-input:    #0b1018    /* input fields */
+/* Surfaces — slightly cool, never pure black */
+--canvas:        #0a0c10
+--surface:       #11141b
+--surface-alt:   #161a22
+--surface-hi:    #1c2230
+--inset:         #07090d
 
---hairline:         #1f2a3a    /* default border */
---hairline-strong:  #2a3a52    /* focused / emphasised border */
---hairline-soft:    #131a26    /* nested separators */
+/* Hairlines — also the box-draw character color */
+--rule:          #2a313d
+--rule-strong:   #3d4757
+--rule-dim:      #1a1f29
 
---ink:              #e6edf6    /* primary text */
---ink-muted:        #aab6c8    /* secondary text */
---ink-subtle:       #6c7a90    /* tertiary text, labels */
---ink-faint:        #4a5468    /* placeholders, disabled */
+/* Ink — warm off-white, CRT-phosphor cream */
+--ink:           #d8d2c4
+--ink-bright:    #ece6d6
+--ink-muted:     #8a9099
+--ink-dim:       #545b66
+--ink-faint:     #363c46
 
---accent:           #7aa2ff    /* primary accent (cool blue) */
---accent-hover:     #97b7ff
---accent-press:     #5f8cf2
---accent-glow:      rgba(122, 162, 255, 0.18)
+/* Single accent: amber */
+--amber:         #e8a04a
+--amber-bright:  #f3b365
+--amber-dim:     #7a5527
+--amber-wash:    rgba(232, 160, 74, 0.10)
 
---seg-1:            #7aa2ff    /* timestamp group */
---seg-2:            #c792ea    /* machine / shard group */
---seg-3:            #f78c6c    /* counter / sequence group */
---seg-4:            #82d8a7    /* random / payload group */
---seg-5:            #ffcb6b    /* version / variant group */
+/* Segment palette — taxonomy only, never decoration */
+--seg-time:      #6ba8d4  /* timestamps */
+--seg-mach:      #c78ad6  /* machine / shard / worker */
+--seg-seq:       #e8a04a  /* counter / sequence */
+--seg-rand:      #9ec182  /* randomness / payload */
+--seg-ver:       #e6c073  /* version / variant */
+--seg-meta:      #7a8294  /* prefix, env, opaque */
 
---success:          #4ec9a4
---warning:          #e0c170
---danger:           #f47174
+/* State */
+--ok:            #9ec182
+--warn:          #e6c073
+--err:           #d97a7a
 ```
 
 Rules of use:
 
-- `--accent` is reserved for: the active tab indicator, focus rings, the
-  detected-format pill on the top result, copy-confirm flashes, and links.
-  It never fills large surfaces.
-- `--seg-*` colors appear only in the byte-layout strip and on the
-  corresponding field labels — they are taxonomy, not decoration.
-- Use `--success` / `--warning` / `--danger` only for explicit state
-  semantics (validation, parse error, confidence warnings).
+- `--amber` is reserved for: the active tab indicator, the `prompt` glyph,
+  the format-name pill on the primary result, the mode pill in the status
+  bar, focus rings, copy-flash, and links. It never fills large surfaces.
+- `--seg-*` colors appear only on byte cells (hex dump) and the matching
+  field-label markers. They are taxonomy, not decoration.
+- `--ok` / `--warn` / `--err` only for explicit state semantics
+  (confidence bar segments, parse-error rail, copy-flash success).
 
 ## Typography
 
-System fonts only. No web fonts; no blocking network requests.
+System mono, with `JetBrains Mono` as a soft preference. No `@import`,
+no web fonts downloaded — the system fallback is the actual ship target.
+This keeps the strict `connect-src 'self'` CSP intact.
 
 ```
---font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter",
-             "Helvetica Neue", Arial, system-ui, sans-serif;
---font-mono: "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code",
-             ui-monospace, Menlo, Consolas, monospace;
+--mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas,
+        'Cascadia Code', monospace;
 ```
 
-Scale (every size is also a custom property `--type-*`):
+Type scale (every size is also a custom property `--t-*`):
 
-| Token         | Size  | Weight | Line-height | Tracking | Use                                        |
-|---------------|-------|--------|-------------|----------|--------------------------------------------|
-| `display`     | 28px  | 600    | 1.20        | -0.4px   | Page-level headline ("ID Lens" wordmark, About hero) |
-| `headline`    | 20px  | 600    | 1.30        | -0.2px   | Section headlines                          |
-| `subhead`     | 16px  | 600    | 1.40        | -0.1px   | Card titles, result format name            |
-| `body`        | 14px  | 400    | 1.55        | 0        | Paragraphs                                 |
-| `body-sm`     | 13px  | 400    | 1.50        | 0        | Helper / hint text                         |
-| `caption`     | 12px  | 500    | 1.40        | 0.4px    | UPPERCASE eyebrow, field labels            |
-| `mono-lg`     | 16px  | 500    | 1.40        | 0        | Inspector input, headline IDs              |
-| `mono`        | 13px  | 400    | 1.55        | 0        | Decoded field values, byte layout          |
-| `mono-sm`     | 12px  | 400    | 1.50        | 0        | Compact tables, batch results              |
-| `button`      | 13px  | 500    | 1.20        | 0.1px    | All buttons                                |
+| Token     | Size  | Use                                                  |
+|-----------|-------|------------------------------------------------------|
+| `--t-xs`  | 11px  | Status bar labels, eyebrows, kbd, segment legend     |
+| `--t-sm`  | 12px  | Tab labels, candidate rows, batch table, hints       |
+| `--t-md`  | 13px  | Default body, hex dump cells, field values, prose    |
+| `--t-lg`  | 15px  | Inspector input value, prompt glyph                  |
+| `--t-xl`  | 20px  | (reserved)                                           |
+| `--t-2xl` | 28px  | (reserved)                                           |
 
-Tabular numerals (`font-variant-numeric: tabular-nums`) everywhere we show
-numbers, timestamps, or byte grids.
+Line height: `--lh: 1.5` everywhere except the hex dump (`1.4`).
 
-Field labels (`caption`) are UPPERCASE with +0.4px tracking. The rest of
-the UI is mixed case.
+`font-variant-numeric: tabular-nums` everywhere. Ligatures explicitly
+disabled (`font-variant-ligatures: none`).
+
+Field labels and eyebrows are UPPERCASE with positive tracking (0.12 –
+0.14 em). The rest is mixed case.
 
 ## Spacing
 
-```
---space-1:  4px
---space-2:  8px
---space-3:  12px
---space-4:  16px
---space-5:  24px
---space-6:  32px
---space-7:  48px
---space-8:  64px
-```
+The TUI doesn't have a named spacing scale — it uses the implicit 4 / 8 /
+12 / 16 / 24 / 32 grid in inline values. Two consistent values are:
 
-- Card interior padding: `--space-5` (24px).
-- Field-row vertical rhythm: `--space-3` (12px).
-- Section gap (between cards): `--space-5` (24px).
-- Page top breathing room: `--space-7` (48px).
+- Panel interior padding: `16px` (`tight` panels: `0` and rely on row
+  padding).
+- Decode card body padding: `18px`.
 
 ## Radius
 
 ```
---radius-xs:  4px    /* chips, status pills */
---radius-sm:  6px    /* buttons, inputs */
---radius-md:  10px   /* cards */
---radius-lg:  14px   /* main inspector panel */
---radius-pill: 999px
+border-radius: 0
 ```
 
-Sharp by intent: no `radius-lg` on small elements. Buttons sit at
-`--radius-sm`, never pill.
+Zero radius everywhere by intent. The TUI doesn't round corners. No pills.
 
 ## Elevation
 
-Depth is carried by surface ladder + hairlines. No drop shadows on the
-dark surface, except a single soft glow under the focused input.
-
-| Level | Treatment                                                          |
-|-------|--------------------------------------------------------------------|
-| 0     | `--canvas`, no border                                              |
-| 1     | `--surface-1` + 1px `--hairline`                                   |
-| 2     | `--surface-2` + 1px `--hairline-strong`                            |
-| 3     | `--surface-3` + 1px `--hairline-strong` + `0 8px 24px rgba(0,0,0,.4)` (overlays only) |
-| focus | 2px `--accent` outline at 50% opacity, offset 2px                  |
+Depth is carried by the surface ladder + hairline borders. No drop shadows
+anywhere, except a single soft `--amber-wash` glow under the focused
+input. The faint scanline overlay (1.2 % alpha, `overlay` blend-mode) is
+non-interactive and pure texture.
 
 ## Components
 
-### Header bar
-- Height 56px, background `--canvas`, bottom hairline.
-- Left: lens-glyph wordmark (`display` weight, mono "ID" + sans "Lens").
-- Right: theme toggle, GitHub link.
+### Titlebar
+- 56 px tall. Bracketed wordmark `[ ID · LENS ]` left (amber brackets,
+  ink-bright lettering), `UNIVERSAL IDENTIFIER INSPECTOR` eyebrow center,
+  live UTC clock with an `--ok` indicator right.
+- Bottom hairline. No padding-top, sits at the top of `.shell`.
 
-### Tabs
-- Inline pill row; selected tab uses `--surface-2` background, `--accent`
-  text. Padding `--space-2` `--space-4`. Radius `--radius-pill`.
+### Tabs (tmux idiom)
+- Numbered (`1 inspector  2 examples  3 batch  4 generators  5 about`).
+- Hairline column separators between tabs.
+- Selected tab: 2-px `--amber` underline + amber text + amber number.
+- Right-aligned keybinding hint with `kbd` glyphs.
+- `1`–`5` switch; `/` focuses input; `?` toggles help; `Esc` closes.
 
 ### Inspector input
-- Mono-lg, multi-line capable but starts at single-line height.
-- Background `--surface-input`, border `--hairline`, radius `--radius-md`,
-  padding `--space-4`.
-- Focus: border `--accent` + soft glow `--accent-glow`.
-- Placeholder: ink-faint, "Paste any identifier…".
+- Shell prompt `>` glyph in `--amber`, weight 600, hairline-divided from
+  the input.
+- No outer rounding, no inner shadow — just inset background
+  `--inset`, hairline border, `--amber` border + soft amber wash on
+  focus.
+- Inline `PASTE` and `CLEAR` actions in the right gutter (uppercase,
+  hairline-divided, amber on hover).
 
-### Result card
-- Background `--surface-1`, border 1px `--hairline`, radius `--radius-lg`,
-  padding `--space-5`.
-- Header row: format pill (accent-tinted), confidence badge, summary line.
-- Body: field grid (label / value / copy) with 12px vertical rhythm.
-- Footer: byte-layout strip (when applicable), reference link.
+### Decode (result) card
+- Top strip: format name (amber), summary, **5-cell confidence bar**
+  (`--ok` / `--warn` / `--err`) + categorical label.
+- Body: hex-dump cross-section + legend + field grid + spec link.
 
-### Field row
-- Three columns: label (caption, ink-subtle, 100px fixed), value (mono,
-  ink, flex), copy button (24×24, surface-2 background, hairline border).
-- Hover: value background gains `--surface-2`.
+### Hex-dump cross-section
+- Each byte cell is `min-width: 2.4ch`, color-coded to its segment.
+- A second row of unicode box-drawing characters (`╰─`, `──`, `─╯`,
+  `┃`) draws **leader brackets** under each contiguous segment.
+- A legend underneath names each segment + width in bits.
+- Segment color = taxonomy (never decoration). Snowflakes intentionally
+  render *without* a hex-dump — their bit-packed structure isn't
+  byte-aligned, so coloring each byte by one segment would mislead.
 
-### Byte layout strip
-- Each byte is a 28×28 (mobile) / 32×32 (desktop) cell containing two hex
-  digits in `mono-sm`. Background is the segment color at 18% alpha;
-  border is the segment color at 60% alpha. Cells abut.
-- A legend strip below names each segment in the matching color.
+### Field grid
+- 3-column `label · value · copy` grid.
+- Each label has a square segment-color **marker** that matches the
+  byte-dump taxonomy.
+- Copy buttons are uppercase `COPY`, flash to `--ok` background with
+  `✓ COPIED` on success.
 
-### Buttons
-- Primary: `--accent` background, `--canvas` text, radius `--radius-sm`.
-  Hover → `--accent-hover`. Press → `--accent-press`.
-- Secondary: `--surface-2` background, `--ink` text, hairline border.
-- Ghost: transparent, `--ink-muted` text, hover surface-2.
-- Icon (copy): 24×24 square, hairline border, surface-2 hover, accent flash
-  on success (200ms ease-out).
+### Confidence bar
+- 5 cells. High = 5 on, medium = 3 on, low = 1 on.
+- `--ok` for high, `--warn` for medium, `--err` for low.
 
-### Tabs / nav
-- See "Tabs" above. Tab labels in `body` weight 500.
+### Candidates list
+- Collapsed under the primary result when there are alternates.
+- Click any row to expand its full hex-dump + field grid inline.
 
-### Badges
-- Confidence: pill, radius `--radius-pill`, padding 2px 8px, caption font.
-  High → success tint. Medium → warning tint. Low → ink-subtle tint.
+### Status bar
+- 24-px tall, pinned `position: fixed; bottom: 0`.
+- Segments separated by hairlines.
+- Mode segment is amber-on-canvas, bold.
+- Permanent privacy claim on the right:
+  `100% client-side · 0 network`.
 
-### Examples list
-- 2-column grid at desktop, 1-column on mobile.
-- Each card: format name (subhead), example ID (mono-sm, truncated),
-  "Inspect" ghost button.
+### Empty / error states
+- Empty: `Awaiting input.` + hint + chip row of try-me examples.
+- Parse error: `--err` left rail (4 px) + `UNRECOGNISED` title +
+  helpful sentence.
 
-### Batch table
-- Sticky-header table. Columns: Input (mono-sm, truncate 24ch), Format,
-  Key field (timestamp / version / type), Confidence.
-
-### Empty / error / success states
-- Empty inspector: small explanatory text + a row of "Try one of these"
-  example chips.
-- Parse error: red-tinted card with `--danger` left rule and a helpful
-  message ("Doesn't look like any format I recognise — supported formats
-  listed in About.").
+### Help overlay
+- Triggered by `?`. Modal-ish (dim scrim, click-outside closes).
+- Lists every key binding with `kbd` glyphs.
 
 ## Motion
 
-- Transitions: 150ms `ease-out` for color/background/border. 200ms for
-  copy-flash success. No spring physics. No layout animations.
-- Avoid `prefers-reduced-motion`: respect it by zeroing all transitions.
+- Transitions: 120 ms color/background/border only.
+- No layout animation.
+- `@media (prefers-reduced-motion: reduce)` zeros all transitions.
 
 ## Accessibility
 
-- Body contrast minimum: ink on canvas ≥ 11:1. Verified.
-- Focus rings always visible (no `outline: none` without replacement).
-- All buttons reachable via Tab. Order matches visual reading order.
-- Tab role + `aria-selected` on the tab row.
-- Copy buttons announce success via `aria-live="polite"`.
-- All decorative icons set `aria-hidden="true"`.
-
-## Light mode
-
-Inverted surface ladder but the same hue families. Canvas `#f5f7fa`,
-surface-1 `#ffffff`, ink `#0e1117`. Accent stays the same hue (`#3d6dd6`
-on light, slightly darker to retain contrast). Tab selection state uses
-ink rather than accent for the text. Persisted in localStorage.
+- All interactive elements reachable via Tab.
+- `aria-selected` on tabs; `role='tablist'` on the tab bar.
+- `aria-live='polite'` on results and copy buttons.
+- Focus rings always visible (`outline: 1px solid var(--amber)`).
+- Color contrast: `--ink` on `--canvas` clears WCAG AA at body sizes.
 
 ## Don't
 
 - Don't add a second chromatic accent.
-- Don't pill-round CTAs.
-- Don't introduce drop shadows on cards.
+- Don't pill-round anything.
+- Don't introduce drop shadows.
 - Don't use `#000000` true black for the canvas.
 - Don't animate layout on tab change.
-- Don't decorate the byte-layout strip — segment colors are taxonomy.
-- Don't load web fonts.
+- Don't put segment colors on UI chrome — they are taxonomy only.
+- Don't load web fonts. System mono is the ship target.
+- Don't reintroduce light mode without explicitly inverting the
+  surface ladder *and* the ink-warmth — the warm-cream ink doesn't
+  translate to a light canvas.
+
+## Historical note
+
+v1 used a cool-blue debugger aesthetic with rounded cards, system sans
+labels, and a light/dark toggle. v2 fully replaces that — see
+`CHANGELOG.md` and the v2 entry in `BUILD_LOG.md` for the full diff.

@@ -1,89 +1,100 @@
-const FORMATS: { name: string; ref: string }[] = [
-  { name: 'UUID v1 (time + MAC)', ref: 'https://www.rfc-editor.org/rfc/rfc9562' },
-  { name: 'UUID v3 (MD5 name-based)', ref: 'https://www.rfc-editor.org/rfc/rfc9562' },
-  { name: 'UUID v4 (random)', ref: 'https://www.rfc-editor.org/rfc/rfc9562' },
-  { name: 'UUID v5 (SHA-1 name-based)', ref: 'https://www.rfc-editor.org/rfc/rfc9562' },
-  { name: 'UUID v6 (reordered v1)', ref: 'https://www.rfc-editor.org/rfc/rfc9562' },
-  { name: 'UUID v7 (Unix-ms ordered)', ref: 'https://www.rfc-editor.org/rfc/rfc9562' },
-  { name: 'UUID v8 (vendor-defined)', ref: 'https://www.rfc-editor.org/rfc/rfc9562' },
-  { name: 'Nil & Max UUIDs', ref: 'https://www.rfc-editor.org/rfc/rfc9562' },
-  { name: 'ULID', ref: 'https://github.com/ulid/spec' },
-  { name: 'KSUID', ref: 'https://github.com/segmentio/ksuid' },
-  { name: 'MongoDB ObjectId', ref: 'https://www.mongodb.com/docs/manual/reference/method/ObjectId/' },
-  { name: 'Snowflake (Twitter / X)', ref: 'https://github.com/twitter-archive/snowflake/tree/snowflake-2010' },
-  { name: 'Snowflake (Discord)', ref: 'https://discord.com/developers/docs/reference#snowflakes' },
-  { name: 'Snowflake (Instagram)', ref: 'https://instagram-engineering.com/sharding-ids-at-instagram-1cf5a71e5a5c' },
-  { name: 'NanoID', ref: 'https://github.com/ai/nanoid' },
-  { name: 'TSID', ref: 'https://github.com/f4b6a3/tsid-creator' },
-  { name: 'Xid', ref: 'https://github.com/rs/xid' },
-  { name: 'CUID v1', ref: 'https://github.com/paralleldrive/cuid' },
-  { name: 'CUID v2', ref: 'https://github.com/paralleldrive/cuid2' },
-  { name: 'Stripe-style IDs', ref: 'https://stripe.com/docs/api' },
-  { name: 'Firebase push IDs', ref: 'https://firebase.blog/posts/2015/02/the-2120-ways-to-ensure-unique-identifiers/' },
-  { name: 'Sqids / Hashids', ref: 'https://sqids.org/' },
-  { name: 'Unix timestamps (s/ms/µs/ns)', ref: 'https://en.wikipedia.org/wiki/Unix_time' },
+import { Panel } from './Panel';
+
+const FORMAT_ROWS: [string, string, string][] = [
+  ['UUID v1', '128', 'time + MAC node'],
+  ['UUID v3 / v5', '128', 'name-hash (MD5 / SHA-1)'],
+  ['UUID v4', '128', 'pure random'],
+  ['UUID v6', '128', 'reordered v1'],
+  ['UUID v7', '128', 'Unix-ms + random'],
+  ['UUID v8', '128', 'vendor-defined'],
+  ['Nil / Max UUID', '128', 'sentinels'],
+  ['ULID', '128', '48-bit ts + 80-bit rand · base32'],
+  ['KSUID', '160', '32-bit ts + 128-bit payload · base62'],
+  ['MongoDB ObjectId', '96', '4B ts + 5B random + 3B counter'],
+  ['Snowflake (Twitter / X)', '64', 'epoch 2010-11-04'],
+  ['Snowflake (Discord)', '64', 'epoch 2015-01-01'],
+  ['Snowflake (Instagram)', '64', 'epoch 2011-09-09'],
+  ['TSID', '64', 'epoch 2020-01-01 · Crockford base32'],
+  ['Xid', '96', '4B ts + 3B machine + 2B pid + 3B counter'],
+  ['CUID v1', '~144', 'ts + counter + fingerprint + random'],
+  ['CUID v2', '~144', 'opaque by design'],
+  ['NanoID', '~126', 'recognition + entropy estimate'],
+  ['Stripe-style IDs', '—', 'prefix → object type + live/test'],
+  ['Firebase push IDs', '120', '48-bit ts + 72-bit random'],
+  ['Sqids / Hashids', '—', 'recognition only'],
+  ['Unix timestamp', '32–64', 'sec / ms / µs / ns'],
 ];
 
 export function About() {
   return (
-    <div class="about">
-      <div class="hero">
-        <h1>About ID Lens</h1>
+    <Panel ix={5} title="About">
+      <div class="prose">
+        <h3>What is this</h3>
         <p>
-          ID Lens is a privacy-respecting universal identifier inspector. Paste any ID and see what it is, what's inside it, and where the spec lives.
-          Everything runs in your browser — there's no backend, no telemetry, no analytics.
+          <strong>ID Lens</strong> is a privacy-respecting, browser-based universal identifier inspector. Paste any
+          identifier and see what it is, what's encoded inside it, and where the spec lives. Every backend engineer
+          has stared at a string of characters in a log file and thought <em>"what kind of ID is this?"</em> — ID Lens
+          answers that question.
+        </p>
+
+        <h3>Privacy</h3>
+        <p>
+          100% client-side. After the initial download of <code>index.html</code> and assets, the app makes
+          <strong> zero</strong> network requests. No telemetry, no analytics, no cookies. The identifier you paste
+          never leaves your browser. Only your active tab is persisted locally — not the input itself.
+        </p>
+
+        <h3>How detection works</h3>
+        <p>
+          Every decoder is asked whether the input matches its shape. Matches are ranked by confidence, low-confidence
+          noise is suppressed when a strong match exists, and ambiguous inputs — most often numeric strings that could
+          be Snowflakes from different vendors — are shown as a candidate list with plausibility scoring (past dates
+          beat future dates; among past dates the most recent vendor wins).
+        </p>
+
+        <h3>Supported formats</h3>
+        <table class="fmt-table">
+          <thead>
+            <tr>
+              <th>Format</th>
+              <th style={{ textAlign: 'right' }}>Bits</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {FORMAT_ROWS.map(([n, b, d]) => (
+              <tr key={n}>
+                <td class="name">{n}</td>
+                <td class="bits">{b}</td>
+                <td class="dim">{d}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h3>Keyboard</h3>
+        <p>
+          <kbd>1</kbd>–<kbd>5</kbd> switch tabs · <kbd>/</kbd> focus the input · <kbd>?</kbd> toggle this help ·
+          {' '}<kbd>Esc</kbd> blur the input / close help.
+        </p>
+
+        <h3>Non-goals</h3>
+        <ul>
+          <li>No JWT decoding or signature verification — separate problem.</li>
+          <li>No hash inversion — impossible by design.</li>
+          <li>No server-side lookups — ID Lens does not call out to anything.</li>
+          <li>No "guess the language / framework" features.</li>
+        </ul>
+
+        <h3>Source</h3>
+        <p>
+          MIT-licensed. Source at{' '}
+          <a href="https://github.com/Skytuhua/id-lens" target="_blank" rel="noopener noreferrer">
+            github.com/Skytuhua/id-lens
+          </a>
+          .
         </p>
       </div>
-
-      <section class="about-block">
-        <h2>Privacy</h2>
-        <p>
-          ID Lens is a static single-page app. After the initial download of HTML, JS, and CSS, the page makes <strong>no network requests</strong>.
-          The identifier you paste never leaves your device. There's no logging, no analytics, no cookies — not even local storage for the input.
-          The only thing persisted locally is your theme preference (dark / light).
-        </p>
-      </section>
-
-      <section class="about-block">
-        <h2>How detection works</h2>
-        <p>
-          Each format has its own decoder with a <code>matches(input)</code> probe that returns a confidence level (<em>high</em>, <em>medium</em>, or <em>low</em>) or no match.
-          Probes use length, alphabet, structural patterns, and plausibility checks (e.g. "does this snowflake decode to a date within 50 years of now?").
-          When multiple formats plausibly match, ID Lens shows all candidates ranked by confidence.
-        </p>
-        <p>
-          Some inputs are inherently ambiguous — a 21-character URL-safe string could be a NanoID or a Firebase push ID; a numeric string could be a Twitter or Discord snowflake.
-          ID Lens shows all plausible interpretations rather than guessing.
-        </p>
-      </section>
-
-      <section class="about-block">
-        <h2>Supported formats</h2>
-        <ul class="format-list">
-          {FORMATS.map((f) => (
-            <li><a href={f.ref} target="_blank" rel="noopener noreferrer">{f.name}</a></li>
-          ))}
-        </ul>
-      </section>
-
-      <section class="about-block">
-        <h2>Non-goals</h2>
-        <ul>
-          <li>No JWT decoding or signature verification — separate concern.</li>
-          <li>No hash inversion — impossible by design.</li>
-          <li>No server-side lookups or external API calls.</li>
-          <li>No support for encrypted / signed tokens whose payload isn't directly readable.</li>
-        </ul>
-      </section>
-
-      <section class="about-block">
-        <h2>Source</h2>
-        <p>
-          ID Lens is open-source under the MIT license.
-          {' '}
-          <a href="https://github.com/Skytuhua/id-lens" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
-        </p>
-      </section>
-    </div>
+    </Panel>
   );
 }

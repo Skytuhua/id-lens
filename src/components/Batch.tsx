@@ -1,84 +1,101 @@
 import { useState, useMemo } from 'preact/hooks';
 import { detectAll } from '../decoders';
+import { Panel } from './Panel';
+import { confidenceToFraction } from '../lib/segments';
 
-const SAMPLE = `6ba7b810-9dad-11d1-80b4-00c04fd430c8
-01ARZ3NDEKTSV4RRFFQ69G5FAV
-507f1f77bcf86cd799439011
-1700000000
-cus_NeZwdNtLEOXuvB
-9m4e2mr0ui3e8a215n4g
-175928847299117063`;
+const SAMPLE =
+  '6ba7b810-9dad-11d1-80b4-00c04fd430c8\n' +
+  '01ARZ3NDEKTSV4RRFFQ69G5FAV\n' +
+  '507f1f77bcf86cd799439011\n' +
+  '175928847299117063\n' +
+  'cus_NeZwdNtLEOXuvB\n' +
+  '1700000000\n' +
+  '9m4e2mr0ui3e8a215n4g';
 
 export function Batch() {
-  const [text, setText] = useState('');
+  const [text, setText] = useState(SAMPLE);
 
   const rows = useMemo(() => {
-    const lines = text.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const lines = text
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
     return lines.map((line) => {
       const results = detectAll(line);
       const top = results[0];
       let keyField = '';
       if (top) {
-        const candidate = top.fields.find((f) => f.label === 'Timestamp')
-          ?? top.fields.find((f) => f.label === 'Version')
-          ?? top.fields.find((f) => f.label === 'Object type');
-        keyField = candidate ? candidate.value : '';
+        const candidate =
+          top.fields.find((f) => f.label === 'Timestamp') ??
+          top.fields.find((f) => f.label === 'Version') ??
+          top.fields.find((f) => f.label === 'Object type');
+        keyField = candidate ? candidate.value : top.summary;
       }
-      return { input: line, format: top?.format ?? 'unknown', formatId: top?.formatId ?? 'unknown', confidence: top?.confidence ?? 'low', keyField };
+      return {
+        input: line,
+        format: top?.format,
+        confidence: top?.confidence,
+        keyField,
+      };
     });
   }, [text]);
 
   return (
-    <>
-      <div class="hero">
-        <h1>Batch decode</h1>
-        <p>Paste one identifier per line. The table updates live with the detected format and a key field for each.</p>
-      </div>
-
-      <div class="batch-grid">
-        <div class="input-card">
-          <label class="input-label" for="batch-input">Identifiers (one per line)</label>
+    <Panel
+      ix={3}
+      title="Batch"
+      right={<span>{rows.length} identifier{rows.length === 1 ? '' : 's'} · paste one per line</span>}
+    >
+      <div class="batch">
+        <div>
           <textarea
-            id="batch-input"
-            class="batch-input"
-            spellcheck={false}
             value={text}
-            placeholder={SAMPLE}
+            placeholder="paste one identifier per line…"
             onInput={(e) => setText((e.currentTarget as HTMLTextAreaElement).value)}
+            spellcheck={false}
           />
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            <button class="btn" onClick={() => setText(SAMPLE)}>Load sample</button>
-            <button class="btn" onClick={() => setText('')} disabled={!text}>Clear</button>
+          <div class="batch__actions">
+            <button class="gen__btn" onClick={() => setText(SAMPLE)}>load sample</button>
+            <button class="gen__btn" onClick={() => setText('')} disabled={!text}>clear</button>
           </div>
         </div>
-
-        {rows.length === 0 ? (
-          <div class="empty-state">Add identifiers above to see them analysed in a table.</div>
-        ) : (
-          <div style={{ overflowX: 'auto', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)' }}>
-            <table class="batch-table">
-              <thead>
+        <div class="batch__results">
+          <table class="batch-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Input</th>
+                <th>Format</th>
+                <th>Key field</th>
+                <th>Conf</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
                 <tr>
-                  <th>Input</th>
-                  <th>Format</th>
-                  <th>Key field</th>
-                  <th>Confidence</th>
+                  <td class="dim" colSpan={5} style={{ textAlign: 'center', padding: '24px 0', color: 'var(--ink-dim)' }}>
+                    paste identifiers on the left
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr>
-                    <td class="mono" title={r.input}><span class="truncate">{r.input}</span></td>
-                    <td>{r.format === 'unknown' ? <span style={{ color: 'var(--ink-faint)' }}>—</span> : r.format}</td>
-                    <td class="mono"><span class="truncate" title={r.keyField}>{r.keyField || '—'}</span></td>
-                    <td>{r.format === 'unknown' ? <span style={{ color: 'var(--ink-faint)' }}>—</span> : <span class={`confidence-pill ${r.confidence}`}>{r.confidence}</span>}</td>
+              ) : (
+                rows.map((r, i) => (
+                  <tr key={i}>
+                    <td class="dim">{String(i + 1).padStart(2, '0')}</td>
+                    <td class="id">{r.input}</td>
+                    <td class="fmt">{r.format ?? <span style={{ color: 'var(--err)' }}>—</span>}</td>
+                    <td class="key">{r.format ? r.keyField : <span class="dim">unrecognised</span>}</td>
+                    <td class="dim">
+                      {r.confidence
+                        ? `${Math.round(confidenceToFraction(r.confidence) * 100)}%`
+                        : ''}
+                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </>
+    </Panel>
   );
 }
